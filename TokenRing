@@ -1,0 +1,135 @@
+import java.util.*;
+
+public class TokenRing {
+
+    public static void main(String args[]) {
+        Scanner input = new Scanner(System.in);
+        int n, sender, receiver, data, choice, flag = 0;
+        boolean continueSending = true;
+
+        // Print a welcoming message and ask for the number of nodes to form the ring.
+        System.out.println("----------------------------------------------------------");
+        System.out.print("*** Enter the number of nodes to form the ring: ");
+        n = input.nextInt();
+        System.out.println("----------------------------------------------------------");
+
+        // Display the nodes forming the ring
+        System.out.print("Nodes in the ring: ");
+        for (int i = 0; i < n; i++) {
+            System.out.print(i + " ");
+        }
+        System.out.println(0); // Complete the ring with first and last node as the same node
+
+        // Initial token is at node 0
+        int token = 0;
+
+        // Loop to handle sending data between nodes until the user chooses to stop
+        do {
+            System.out.println("----------------------------------------------------------");
+
+            // Input validation for sender and receiver
+            do {
+                System.out.print("** Enter sender from above nodes displayed: ");
+                sender = input.nextInt();
+                System.out.print("** Enter receiver from above nodes displayed: ");
+                receiver = input.nextInt();
+                if (sender < 0 || sender >= n || receiver < 0 || receiver >= n || sender == receiver) {
+                    System.out.println("Invalid input! Sender and receiver must be different and between 0 and " + (n - 1));
+                }
+            } while (sender < 0 || sender >= n || receiver < 0 || receiver >= n || sender == receiver);
+
+            // Enter the data to be transmitted
+            System.out.print("** Enter data to process: ");
+            data = input.nextInt();
+            System.out.println("----------------------------------------------------------");
+
+            // Display token passing process
+            System.out.print("Token passing: ");
+            int i = token;
+            while (i != sender) {
+                System.out.print(i + " -> ");
+                i = (i + 1) % n;
+            }
+            System.out.println(sender);
+
+            // Display sender sending data and forwarding the data node by node
+            System.out.println("------> Sender " + sender + " sending data: " + data);
+            for (int i1 = sender + 1; i1 != receiver; i1 = (i1 + 1) % n) {
+                System.out.println("Data " + data + " forwarded by node " + i1);
+            }
+
+            // Display receiver receiving data
+            System.out.println("------> Receiver " + receiver + " received data: " + data);
+            System.out.println("----------------------------------------------------------");
+
+            // Update the token to the sender node
+            token = sender;
+
+            // Ask the user if they want to send data again
+            do {
+                try {
+                    System.out.print("Do you want to send again? Enter 1 for Yes and 0 for No: ");
+                    choice = input.nextInt();
+                    if (choice != 1 && choice != 0) {
+                        flag = 1;
+                        System.out.println("Invalid input! Please enter 1 or 0.");
+                    } else {
+                        flag = 0;
+                        continueSending = (choice == 1);
+                    }
+                } catch (InputMismatchException e) {
+                    System.out.println("Invalid Input");
+                    input.next(); // Consume the invalid input
+                    flag = 1;
+                }
+            } while (flag == 1);
+
+        } while (continueSending);
+
+        input.close();
+    }
+}
+
+------------------------------------------
+steps:
+1) cd Token/src
+2) javac *.java
+3) java TokenRing
+
+--------------------------------------------
+output :
+
+Inspiron-3584:~$ cd TokenRing
+Inspiron-3584:~/TokenRing$ cd src
+Inspiron-3584:~/TokenRing/src$ javac *.java
+Inspiron-3584:~/TokenRing/src$ java TokenRing
+----------------------------------------------------------
+*** Enter the number of nodes to form the ring: 4
+----------------------------------------------------------
+Nodes in the ring: 0 1 2 3 0
+----------------------------------------------------------
+** Enter sender from above nodes displayed: 1
+** Enter receiver from above nodes displayed: 3
+** Enter data to process: 50
+----------------------------------------------------------
+Token passing: 0 -> 1
+------> Sender 1 sending data: 50
+Data 50 forwarded by node 2
+------> Receiver 3 received data: 50
+----------------------------------------------------------
+Do you want to send again? Enter 1 for Yes and 0 for No: 1
+----------------------------------------------------------
+** Enter sender from above nodes displayed: 2
+** Enter receiver from above nodes displayed: 1
+** Enter data to process: 50
+----------------------------------------------------------
+Token passing: 1 -> 2
+------> Sender 2 sending data: 50
+Data 50 forwarded by node 3
+Data 50 forwarded by node 0
+------> Receiver 1 received data: 50
+----------------------------------------------------------
+Do you want to send again? Enter 1 for Yes and 0 for No: 0
+
+
+
