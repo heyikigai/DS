@@ -1,0 +1,119 @@
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+public class BerkeleyAlgorithm {
+
+    public static void main(String[] args) throws ParseException {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of clients: ");
+        int clientCount = sc.nextInt();
+        sc.nextLine(); // Consume newline
+
+        String[] timeStrings = new String[clientCount + 1]; // index 0 is server
+
+        for (int i = 0; i < timeStrings.length; i++) {
+            if (i == 0) {
+                System.out.print("Enter Server time (HH:mm): ");
+            } else {
+                System.out.print("Enter Client " + i + " time (HH:mm): ");
+            }
+
+            String timeInput = sc.nextLine();
+            timeStrings[i] = appendCurrentDateToTime(timeInput);
+        }
+
+        System.out.println("\n--- Before Synchronization ---");
+        displayTime(timeStrings, "Original");
+
+        performBerkeleySync(timeStrings);
+
+        System.out.println("\n--- After Synchronization ---");
+        displayTime(timeStrings, "Synchronized");
+
+        sc.close();
+    }
+
+    public static void performBerkeleySync(String[] timeStrings) throws ParseException {
+        int totalClocks = timeStrings.length;
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm | yyyy-MM-dd");
+
+        long[] timesInMillis = new long[totalClocks];
+        for (int i = 0; i < totalClocks; i++) {
+            timesInMillis[i] = sdf.parse(timeStrings[i]).getTime();
+        }
+
+        long serverTime = timesInMillis[0];
+        long[] offsets = new long[totalClocks];
+
+        for (int i = 0; i < totalClocks; i++) {
+            offsets[i] = timesInMillis[i] - serverTime;
+        }
+
+        long sum = 0;
+        for (long offset : offsets) {
+            sum += offset;
+        }
+
+        long averageOffset = sum / totalClocks;
+        System.out.println("\nCalculated average offset (in minutes): " + (averageOffset / (60 * 1000)));
+
+        for (int i = 0; i < totalClocks; i++) {
+            long adjustment = averageOffset - offsets[i];
+            timesInMillis[i] += adjustment;
+
+            if (i != 0) {
+                System.out.println("Client " + i + " adjustment (in minutes): " + (adjustment / (60 * 1000)));
+            }
+        }
+
+        for (int i = 0; i < totalClocks; i++) {
+            timeStrings[i] = sdf.format(new Date(timesInMillis[i]));
+        }
+    }
+
+    public static void displayTime(String[] timeStrings, String label) {
+        System.out.println(label + " Server Time:\t" + timeStrings[0]);
+        for (int i = 1; i < timeStrings.length; i++) {
+            System.out.println(label + " Client " + i + " Time:\t" + timeStrings[i]);
+        }
+    }
+
+    public static String appendCurrentDateToTime(String time) {
+        Calendar now = Calendar.getInstance();
+        int year = now.get(Calendar.YEAR);
+        int month = now.get(Calendar.MONTH) + 1; // Month is 0-based
+        int day = now.get(Calendar.DAY_OF_MONTH);
+        return time + " | " + year + "-" + month + "-" + day;
+    }
+}
+
+------------------------------------------
+output
+
+Inspiron-3584:~/Berkely/src$ javac *.java
+Inspiron-3584:~/Berkely/src$ java BerkeleyAlgorithm
+Enter number of clients: 3
+Enter Server time (HH:mm): 03:00
+Enter Client 1 time (HH:mm): 03:10
+Enter Client 2 time (HH:mm): 02:50
+Enter Client 3 time (HH:mm): 03:20
+
+--- Before Synchronization ---
+Original Server Time:	03:00 | 2025-5-4
+Original Client 1 Time:	03:10 | 2025-5-4
+Original Client 2 Time:	02:50 | 2025-5-4
+Original Client 3 Time:	03:20 | 2025-5-4
+
+Calculated average offset (in minutes): 5
+Client 1 adjustment (in minutes): -5
+Client 2 adjustment (in minutes): 15
+Client 3 adjustment (in minutes): -15
+
+--- After Synchronization ---
+Synchronized Server Time:	03:05 | 2025-05-04
+Synchronized Client 1 Time:	03:05 | 2025-05-04
+Synchronized Client 2 Time:	03:05 | 2025-05-04
+Synchronized Client 3 Time:	03:05 | 2025-05-04
+
