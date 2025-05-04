@@ -1,0 +1,116 @@
+AddServerIntf.java
+
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+public interface AddServerIntf extends Remote {
+    public int add(int a, int b) throws RemoteException;
+}
+
+--------------------------------
+AddServerImpl.java
+
+import java.rmi.server.UnicastRemoteObject;
+import java.rmi.RemoteException;
+
+public class AddServerImpl extends UnicastRemoteObject implements AddServerIntf {
+
+    // Constructor
+    public AddServerImpl() throws RemoteException {
+        super();
+    }
+
+    @Override
+    public int add(int a, int b) throws RemoteException {
+        return a + b;
+    }
+}
+
+-----------------------------------
+AddServer.java
+
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.Naming;
+
+public class AddServer {
+    public static void main(String[] args) {
+        try {
+            // Create an instance of the AddServerImpl
+            AddServerImpl addServer = new AddServerImpl();
+
+            // Create RMI registry on port 2000
+            LocateRegistry.createRegistry(2001);
+
+            // Bind the AddServerIntf to the RMI registry
+            Naming.rebind("rmi://127.0.0.1:2001/AddServer", addServer);
+            System.out.println("AddServer bound to registry on port 2000");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+-----------------------------------
+AddClient.java
+
+import java.rmi.Naming;
+
+public class AddClient {
+    public static void main(String[] args) {
+        if (args.length != 3) {
+            System.out.println("Usage: java AddClient <host> <num1> <num2>");
+            return;
+        }
+
+        try {
+            String host = args[0];
+            int num1 = Integer.parseInt(args[1]);
+            int num2 = Integer.parseInt(args[2]);
+
+            // Lookup the remote AddServerIntf
+            AddServerIntf addServer = (AddServerIntf) Naming.lookup("rmi://" + host + ":2001/AddServer");
+
+            // Call the remote add method
+            int result = addServer.add(num1, num2);
+            System.out.println("Result: " + result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+----------------------------------------
+
+steps: 
+
+1) sudo apt update
+	sudo apt install openjdk-8-jdk openjdk-8-jre
+	sudo update-alternatives --config java
+	
+	lsof -i :2001
+	kill pid
+	
+2) cd RMI/scr
+   1st terminal : javac *.java
+   				  java AddServer
+   2nd terminal : java AddClient 127.0.0.1 5 8
+   
+----------------------------------------------
+output:
+
+//server side
+Inspiron-3584:~/RMI_ADD/src$ lsof -i :2001
+COMMAND     PID    USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+rmiregist 19502 darshan   13u  IPv6 227300      0t0  TCP *:2001 (LISTEN)
+Inspiron-3584:~/RMI_ADD/src$ kill 19502
+Inspiron-3584:~/RMI_ADD/src$ javac *.java
+[1]+  Exit 143                rmiregistry 2001
+Inspiron-3584:~/RMI_ADD/src$ java AddServer
+AddServer bound to registry on port 2000
+
+//client side
+Inspiron-3584:~/RMI_ADD/src$ java AddClient 127.0.0.1 5 8
+Result: 13
