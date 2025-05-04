@@ -1,0 +1,97 @@
+CircleImplementation.java
+
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+public class CircleImplementation extends UnicastRemoteObject implements CircleInterface {
+    protected CircleImplementation() throws RemoteException {
+        super();
+    }
+
+    public double area(double r) throws RemoteException {
+        return Math.PI * r * r;
+    }
+}
+
+------------------------------
+CircleInterface.java
+
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+public interface CircleInterface extends Remote {
+    double area(double r) throws RemoteException;
+}
+
+-------------------------------
+Client.java
+
+import java.rmi.Naming;
+import java.util.Scanner;
+
+public class Client {
+    public static void main(String[] args) {
+        try {
+            System.out.println("|-|-|-|-|-|-|-|-|-|-|");
+            Scanner sc = new Scanner(System.in);
+            System.out.print("Enter the radius of the circle: ");
+            double r = sc.nextDouble();
+
+            // Lookup the remote object
+            CircleInterface stub = (CircleInterface) Naming.lookup("rmi://localhost:2000/circle");
+            double result = stub.area(r);
+            System.out.println("Area of Circle is: " + result);
+        } catch (Exception e) {
+            System.out.println("Client error: " + e);
+        }
+    }
+}
+
+---------------------------------
+Server.java
+
+import java.rmi.Naming;
+import java.rmi.registry.LocateRegistry;
+
+public class Server {
+    public static void main(String[] args) {
+        try {
+            // Start RMI registry on port 2000 programmatically (don’t use rmiregistry manually if this is here)
+            LocateRegistry.createRegistry(2000);
+            // Create and bind the remote object
+            CircleInterface obj = new CircleImplementation();
+            Naming.rebind("rmi://localhost:2000/circle", obj);
+            System.out.println("Server is running...");
+        } catch (Exception e) {
+            System.out.println("Server error: " + e);
+        }
+    }
+}
+
+------------------------------------------
+Steps:
+1) sudo lsdf -i :2000
+kill pid
+
+sudo apt update
+sudo apt install openjdk-8-jdk openjdk-8-jre
+sudo update-alternatives --config java
+
+2)cd RMI/src
+1st terminal -> javac *.java
+				java Server
+				
+2nd terminal -> java Client
+---------------------------------------------
+output :
+
+-Inspiron-3584:~$ cd RMI/src
+-Inspiron-3584:~/RMI/src$ javac *.java
+-Inspiron-3584:~/RMI/src$ java Server
+Server is running...
+
+Inspiron-3584:~/RMI/src$ java Client
+|-|-|-|-|-|-|-|-|-|-|
+Enter the radius of the circle: 2
+Area of Circle is: 12.566370614359172
+
